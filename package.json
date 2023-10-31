@@ -1,6 +1,6 @@
 {
   "name": "homebridge-bond",
-  "version": "3.2.9",
+  "version": "3.2.10",
   "description": "A homebridge plugin to control your Bond devices over the v2 API.",
   "license": "MIT",
   "main": "dist/index.js",
@@ -42,10 +42,10 @@
     "eslint": "^7.22.0",
     "homebridge": "^1.4.0",
     "mocha": "^9.1.2",
-    "nodemon": "^2.0.7",
+    "nodemon": "^2.0.19",
     "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
-    "ts-node": "^9.1.1",
+    "ts-node": "^10.8.1",
     "typescript": "^4.2.2"
   },
   "dependencies": {
