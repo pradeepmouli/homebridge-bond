@@ -5,6 +5,15 @@ export interface BondConfig {
   ip_address: string;
   token: string;
   hide_device_ids?: string[];
+
+  devices?: DeviceConfig[];
+}
+
+export interface DeviceConfig {
+  ID: string;
+  name: string;
+  timeToOpen?: number;
+
 }
 
 export interface BondPlatformConfig extends PlatformConfig {
@@ -21,8 +30,8 @@ export namespace BondPlatformConfig {
 
     function evaluate(type: string, key: string): boolean {
       const value = cast[key];
-      if (value !== undefined && typeof(value) !== type) {
-        platform.log.error(`${key} has invalid value: ${value}. Expected ${type}, got ${typeof(value)}.`);
+      if (value !== undefined && typeof (value) !== type) {
+        platform.log.error(`${key} has invalid value: ${value}. Expected ${type}, got ${typeof (value)}.`);
         return false;
       }
       return true;
@@ -52,8 +61,8 @@ export namespace BondConfig {
         platform.log.error(`Missing ${key} in BondConfig.`);
         return false;
       }
-      if (typeof(value) !== type) {
-        platform.log.error(`BondConfig ${key} has invalid value: ${value}. Expected ${type}, got ${typeof(value)}.`);
+      if (typeof (value) !== type) {
+        platform.log.error(`BondConfig ${key} has invalid value: ${value}. Expected ${type}, got ${typeof (value)}.`);
         return false;
       }
       return true;
@@ -65,14 +74,14 @@ export namespace BondConfig {
 
     if (config.hide_device_ids !== undefined) {
       validHideDeviceIds = config.hide_device_ids.map(id => {
-        if (typeof(id) !== 'string') {
-          platform.log.error(`hide_device_ids contains invalid value: ${id}. Expected string, got ${typeof(id)}.`);
+        if (typeof (id) !== 'string') {
+          platform.log.error(`hide_device_ids contains invalid value: ${id}. Expected string, got ${typeof (id)}.`);
           return false;
         }
         return true;
       }).every(v => v === true);
     }
-    
+
     return validIP && validToken && validHideDeviceIds;
   }
 }

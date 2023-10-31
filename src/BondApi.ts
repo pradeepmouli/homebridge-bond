@@ -24,7 +24,7 @@ export class BondApi {
   private bondToken: string;
   private uri: BondUri;
 
-  constructor(
+  constructor (
     private readonly platform: BondPlatform,
     bondToken: string,
     ipAddress: string) {
@@ -40,8 +40,17 @@ export class BondApi {
     return this.request(HTTPMethod.GET, this.uri.version());
   }
 
-  public getState(id: string): Promise<BondState> {
-    return this.request(HTTPMethod.GET, this.uri.state(id));
+  public async getState(id: string): Promise<BondState> {
+    const r = await (this.request(HTTPMethod.GET, this.uri.state(id)) as Promise<BondState>);
+    r.direction = 0;
+    if (r?.open === 1) {
+      r.position = 100;
+
+    } else {
+      r.position = 0;
+    }
+
+    return r;
   }
 
   public getDeviceIds(): Promise<string[]> {
@@ -85,13 +94,17 @@ export class BondApi {
 
   // Actions
 
-  private action(device: Device, action: Action, callback: CharacteristicSetCallback): Promise<void> {
+  private action(device: Device, action: Action, callback?: CharacteristicSetCallback): Promise<void> {
     return this.request(HTTPMethod.PUT, this.uri.action(device.id, action))
       .then(() => {
-        callback(null);
+        if (callback) {
+          callback(null);
+        }
       })
       .catch((error: string) => {
-        callback(Error(error));
+        if (callback) {
+          callback(Error(error));
+        }
       });
   }
 
@@ -170,8 +183,8 @@ export class BondApi {
     return this.action(device, Action.TogglePower, callback);
   }
 
-  public toggleOpen(device: Device, callback: CharacteristicSetCallback): Promise<void> {
-    return this.action(device, Action.ToggleOpen, callback);
+  public toggleOpen(device: Device): Promise<void> {
+    return this.action(device, Action.ToggleOpen);
   }
 
   public preset(device: Device, callback: CharacteristicSetCallback): Promise<void> {
@@ -179,7 +192,7 @@ export class BondApi {
   }
 
   public stop(device: Device, callback?: CharacteristicSetCallback): Promise<void> {
-    return this.request(HTTPMethod.PUT, this.uri.action(device.id, Action.Stop))
+    return this.request(HTTPMethod.PUT, this.uri.action(device.id, Action.Close))
       .then(() => {
         if (callback) {
           callback(null);
@@ -247,7 +260,7 @@ export class BondApi {
   public toggleState(device: Device, property: string, callback: CharacteristicSetCallback): Promise<void> {
     return this.getState(device.id)
       .then(state => {
-        if(property !== 'open' && property !== 'power' && property !== 'light' ) {
+        if (property !== 'open' && property !== 'power' && property !== 'light') {
           callback(null);
           throw Error(`This device does not have ${property} in it's Bond state`);
         }
@@ -335,7 +348,7 @@ export class BondApi {
         this.platform.log.debug(`Response (${bondUuid}) [${method} ${uri}] - ${JSON.stringify(response.data)}`);
         return response.data;
       })
-      .catch((error: Error | AxiosError) =>  {
+      .catch((error: Error | AxiosError) => {
         if (axios.isAxiosError(error) && error.response) {
           const response = error.response;
           switch (response.status) {

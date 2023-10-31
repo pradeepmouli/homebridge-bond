@@ -1,66 +1,90 @@
 {
   "pluginAlias": "Bond",
   "pluginType": "platform",
-  "singular": true,
   "schema": {
-    "type": "object",
+    "definitions": {
+      "DeviceConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "ID": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "timeToOpen": {
+            "type": "number"
+          }
+        },
+        "required": ["ID", "timeToOpen"],
+        "type": "object"
+      }
+    },
     "properties": {
       "bonds": {
-        "title": "Bonds",
-        "type": "array",
-        "required": true,
-        "uniqueItems": true,
         "items": {
-          "title": "Bond",
-          "type": "object",
           "properties": {
-            "ip_address": {
-              "title": "IP Address",
-              "type": "string",
-              "required": true,
-              "description": "IP Address of your Bond.",
-              "placeholder": "e.g. 192.168.1.1"
-            },
-            "token": {
-              "title": "Bond Token",
-              "type": "string",
-              "required": true,
-              "description": "Can be found in the bond app by tapping your Bond device and looking for 'Local Token'.",
-              "placeholder": "e.g. fd3904894ff98f"
+            "devices": {
+              "items": {
+                "$ref": "#/definitions/DeviceConfig"
+              },
+              "type": "array"
             },
             "hide_device_ids": {
-              "title": "Hide Device IDs",
               "description": "Hide individual devices by Device ID. Device ID can be found in the Bond app under Device Settings.",
-              "placeholder": "e.g. 0000018",
-              "type": "array",
               "items": {
                 "type": "string"
-              }
+              },
+              "placeholder": "e.g. 0000018",
+              "title": "Hide Device IDs",
+              "type": "array"
+            },
+            "ip_address": {
+              "description": "IP Address of your Bond.",
+              "placeholder": "e.g. 192.168.1.1",
+              "required": true,
+              "title": "IP Address",
+              "type": "string"
+            },
+            "token": {
+              "description": "Can be found in the bond app by tapping your Bond device and looking for 'Local Token'.",
+              "placeholder": "e.g. fd3904894ff98f",
+              "required": true,
+              "title": "Bond Token",
+              "type": "string"
             }
-          }
-        }
-      },
-      "include_dimmer": {
-        "title": "Include dimmer",
-        "type": "boolean",
-        "default": false,
-        "required": false,
-        "description": "If dimming is a valid action on a device, it will be included as additional switch on the accessory. Since this is an odd solution to dimming, it's off by default."
-      },
-      "include_toggle_state": {
-        "title": "Include toggle switch for fixing device state.",
-        "type": "boolean",
-        "default": false,
-        "required": false,
-        "description": "This will add a switch to single-action accessories to toggle the state (i.e. Shades, Fireplace, Generic, Lights). Fan speeds are not eligible for this option."
+          },
+          "title": "Bond",
+          "type": "object"
+        },
+        "required": true,
+        "title": "Bonds",
+        "type": "array",
+        "uniqueItems": true
       },
       "fan_speed_values": {
-        "title": "Use fan speed values",
-        "type": "boolean",
         "default": false,
+        "description": "Use fan speed values instead of percentages (i.e. Hey Siri set the Office Fan to 2).",
         "required": false,
-        "description": "Use fan speed values instead of percentages (i.e. Hey Siri set the Office Fan to 2)."
+        "title": "Use fan speed values",
+        "type": "boolean"
+      },
+      "include_dimmer": {
+        "default": false,
+        "description": "If dimming is a valid action on a device, it will be included as additional switch on the accessory. Since this is an odd solution to dimming, it's off by default.",
+        "required": false,
+        "title": "Include dimmer",
+        "type": "boolean"
+      },
+      "include_toggle_state": {
+        "default": false,
+        "description": "This will add a switch to single-action accessories to toggle the state (i.e. Shades, Fireplace, Generic, Lights). Fan speeds are not eligible for this option.",
+        "required": false,
+        "title": "Include toggle switch for fixing device state.",
+        "type": "boolean"
       }
-    }
-  }
+    },
+    "type": "object"
+  },
+  "singular": true
 }

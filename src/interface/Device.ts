@@ -1,5 +1,6 @@
 import { Action } from '../enum/Action';
 import { DeviceType } from '../enum/DeviceType';
+import { BondState } from './Bond';
 import { Properties } from './Properties';
 
 export interface Device {
@@ -11,7 +12,11 @@ export interface Device {
   actions: Action[];
   properties: Properties;
   commands: Command[] | undefined;
+  state: BondState;
 
+  startMoveTime?: Date;
+  endMoveTime?: Date;
+  timeToOpen?: number;
   // homebridge-bond properties
   uniqueId: string;
   bondId: string;
@@ -115,15 +120,15 @@ export namespace Device {
     if (device.commands) {
       const values = device.commands
         .filter(cmd => {
-        // Find all of the commands associated with speed
+          // Find all of the commands associated with speed
           return cmd.action === Action.SetSpeed;
         })
         .sort((a, b) => {
-        // sort them
+          // sort them
           return a.argument! < b.argument! ? 0 : 1;
         })
         .map(cmd => {
-        // map down to the raw argument values from that command
+          // map down to the raw argument values from that command
           return cmd.argument || 0;
         });
 

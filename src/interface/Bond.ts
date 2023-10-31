@@ -6,6 +6,8 @@ import { BondPlatformConfig } from '../interface/config';
 import { Device } from '../interface/Device';
 import { Version } from './Version';
 import axios, { AxiosError } from 'axios';
+import { Stats } from 'fs';
+import { time } from 'console';
 
 export class Bond {
   public api: BondApi;
@@ -14,7 +16,7 @@ export class Bond {
   public accessories: BondAccessory[] = [];
   public version!: Version;
 
-  constructor(
+  constructor (
     private readonly platform: BondPlatform,
     config: BondConfig) {
     this.config = config;
@@ -49,7 +51,7 @@ export class Bond {
       .then(() => {
         return bond;
       })
-      .catch((error: any | AxiosError) =>  {
+      .catch((error: any | AxiosError) => {
         if (axios.isAxiosError(error) && error.response) {
           const response = error.response;
           switch (response.status) {
@@ -110,17 +112,57 @@ export class Bond {
   public uniqueDeviceId(deviceId: string): string {
     return `${this.version.bondid}${deviceId}`;
   }
-  
+
   public receivedBPUPPacket(packet: BPUPPacket) {
     this.accessories.forEach(accessory => {
       const device: Device = accessory.accessory.context.device;
       // Topic structure is 'devices/[device_id]/state'
-      if(packet.t 
+      if (packet.t
         && packet.t.includes(device.id)
         && packet.t.includes('state')
         && packet.b) {
         const state = packet.b as BondState;
         this.platform.debug(accessory.accessory, 'Received new state: ' + JSON.stringify(state));
+
+        if (device.state.open !== undefined && state.open !== undefined) {
+          if (device.state.open !== state.open) /*Shade is moving*/ {
+            device.startMoveTime = (new Date());
+            device.endMoveTime = undefined;
+
+            if (device.state.open > state.open) {
+              /* closing */
+              state.direction = -1;
+              state.position = device.state.position ?? 100.00;
+              this.platform.debug(accessory.accessory, 'shades are closing');
+            } else {
+              /* open */
+              this.platform.debug(accessory.accessory, 'shades are opening');
+              state.direction = 1;
+              state.position = device.state.position ?? 0.00;
+            }
+            device.state = state;
+          } else {
+            device.endMoveTime = (new Date());
+
+            // eslint-disable-next-line max-len
+            if (device.startMoveTime) {
+
+              const timeElapsed = device.endMoveTime.getTime() - device.startMoveTime.getTime();
+              this.platform.debug(accessory.accessory, 'Travel Time (in ms): ' + (timeElapsed).toString());
+              if (device.state.position !== undefined) {
+
+                state.position = device.state.position ?? 0 + timeElapsed / 1000.00 / 30;
+                this.platform.debug(accessory.accessory, 'New Position: ' + state.position.toString());
+              }
+              device.startMoveTime = undefined;
+              state.direction = 0;
+              device.state = state;
+            }
+
+          }
+
+        }
+
         accessory.updateState(state);
       }
     });
@@ -137,6 +179,8 @@ export interface BondState {
   open?: number;
   brightness?: number;
   flame?: number;
+
+  position?: number;
 }
 
 export interface BPUPPacket {

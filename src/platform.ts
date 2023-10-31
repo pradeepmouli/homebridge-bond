@@ -14,7 +14,7 @@ export class BondPlatform implements DynamicPlatformPlugin {
   private accessories: PlatformAccessory[] = [];
   private bonds: Bond[] | undefined;
 
-  constructor(
+  constructor (
     public log: Logging,
     public config: PlatformConfig,
     public api: API) {
@@ -24,11 +24,11 @@ export class BondPlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    if(!BondPlatformConfig.isValid(this)) {
+    if (!BondPlatformConfig.isValid(this)) {
       this.log.error(`Config: ${JSON.stringify(config, null, 2)}`);
       return;
     }
-    
+
     this.log.debug(`Config: ${JSON.stringify(config, null, 2)}`);
 
     api.on('didFinishLaunching', () => {
@@ -72,7 +72,7 @@ export class BondPlatform implements DynamicPlatformPlugin {
 
   public getDevices(bond: Bond) {
     this.cleanupBondData(bond);
-    
+
     this.log(`Getting devices for this Bond (${bond.version.bondid})...`);
     this.log(`${bond.deviceIds.length} devices were found on this Bond (${bond.version.bondid}).`);
     const filtered = bond.deviceIds.filter(deviceId => {
@@ -96,6 +96,7 @@ export class BondPlatform implements DynamicPlatformPlugin {
           device.uniqueId = bond.uniqueDeviceId(device.id);
           // Set the bond id
           device.bondId = bond.version.bondid;
+
         });
         this.addAccessories(devices);
       })
@@ -109,7 +110,7 @@ export class BondPlatform implements DynamicPlatformPlugin {
     bond.deviceIds.forEach(deviceId => {
       this.accessories.forEach(accessory => {
         // Only run if device does not have uniqueId
-        if (accessory.context.device.uniqueId === undefined 
+        if (accessory.context.device.uniqueId === undefined
           && accessory.context.device.id === deviceId) {
           const uniqueId = bond.uniqueDeviceId(deviceId);
           this.log.debug(`Updating device data with uniqueId ${uniqueId}`);
@@ -119,7 +120,7 @@ export class BondPlatform implements DynamicPlatformPlugin {
       });
     });
   }
-  
+
   addAccessories(devices: Device[]) {
     devices.forEach(device => {
       this.addAccessory(device);
@@ -141,12 +142,12 @@ export class BondPlatform implements DynamicPlatformPlugin {
     }
 
     // Make sure device shouldn't be excluded
-    if ((bond.config.hide_device_ids !== undefined 
+    if ((bond.config.hide_device_ids !== undefined
       && bond.config.hide_device_ids.includes(device.id))) {
       this.log(`[${device.name}] Excluding ${device.id}.`);
       return;
     }
-    
+
     // Make sure device has supported actions
     if (!Device.isSupported(device)) {
       this.log(`[${device.name}] Device has no supported actions.`);
@@ -187,7 +188,7 @@ export class BondPlatform implements DynamicPlatformPlugin {
     }
 
     this.accessories.push(accessory);
-    
+
     // If bonds hasn't been initilized, attempt to configure the accessory
     // after a delay
     if (this.bonds) {
@@ -212,14 +213,17 @@ export class BondPlatform implements DynamicPlatformPlugin {
     if (!bond) {
       return;
     }
-
+    const r = bond.config.devices?.find(p => p.ID === device.id);
+    if (r) {
+      device.timeToOpen = r.timeToOpen;
+    }
     if ((bond.config.hide_device_ids
       && bond.config.hide_device_ids.includes(device.id))) {
       this.removeAccessory(accessory);
       return;
     }
     this.logAccessory(accessory, `actions: ${device.actions}`);
-    
+
     const bondAccessory = BondAccessory.create(this, accessory, bond);
     bond.accessories.push(bondAccessory);
   }
@@ -231,7 +235,7 @@ export class BondPlatform implements DynamicPlatformPlugin {
     const message = Buffer.from('');
 
     const client = dgram.createSocket('udp4');
-    
+
     const log = this.log;
 
     function send() {
@@ -243,12 +247,12 @@ export class BondPlatform implements DynamicPlatformPlugin {
         log.debug(`UDP message sent to ${HOST}:${PORT}`);
       });
     }
-    send(); 
-    // From Bond API Docs: The client should continue to send the Keep-Alive datagram on 
+    send();
+    // From Bond API Docs: The client should continue to send the Keep-Alive datagram on
     // the same socket every 60 seconds to keep the connection active.
     setInterval(send, 1000 * 60);
 
-    client.on('message', (message: Buffer, remote: { address: string; port: string }) => {
+    client.on('message', (message: Buffer, remote: { address: string; port: string; }) => {
       const msg = message.toString().trim();
       const packet = JSON.parse(msg) as BPUPPacket;
       log.debug(`UDP Message received from ${remote.address}:${remote.port} - ${msg}`);
